@@ -1,0 +1,628 @@
+<article class="content--container">
+<h1 class="title">Serving Web Content with Spring MVC</h1>
+<div class="article-body"><div class="paragraph">
+<p>This guide walks you through the process of creating a "hello world" web site with Spring.</p>
+</div>
+<div class="sect1">
+<h2 id="_what_you_ll_build">What you’ll build</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You’ll build a service that will accept HTTP GET requests at:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>http://localhost:8080/greeting</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and respond with a web page displaying a greeting:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>"Hello, World!"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can customize the greeting with an optional <code>name</code> parameter in the query string:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>http://localhost:8080/greeting?name=User</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>name</code> parameter value overrides the default value of "World" and is reflected in the response:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>"Hello, User!"</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_you_ll_need">What you’ll need</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li> <p>About 15 minutes</p> </li>
+<li> <p>A favorite text editor or IDE</p> </li>
+<li> <p><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 1.6</a> or later</p> </li>
+<li> <p><a href="http://www.gradle.org/downloads">Gradle 1.11+</a> or <a href="http://maven.apache.org/download.cgi">Maven 3.0+</a></p> </li>
+<li> <p>You can also import the code from this guide as well as view the web page directly into <a href="/guides/gs/sts">Spring Tool Suite (STS)</a> and work your way through it from there.</p> </li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_complete_this_guide">How to complete this guide</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Like most Spring <a href="/guides">Getting Started guides</a>, you can start from scratch and complete each step, or you can bypass basic setup steps that are already familiar to you. Either way, you end up with working code.</p>
+</div>
+<div class="paragraph">
+<p>To <strong>start from scratch</strong>, move on to <a href="#scratch">Build with Gradle</a>.</p>
+</div>
+<div class="paragraph">
+<p>To <strong>skip the basics</strong>, do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li> <p><a href="https://github.com/spring-guides/gs-serving-web-content/archive/master.zip">Download</a> and unzip the source repository for this guide, or clone it using <a href="/understanding/Git">Git</a>: <code>git clone <a href="https://github.com/spring-guides/gs-serving-web-content.git">https://github.com/spring-guides/gs-serving-web-content.git</a></code></p> </li>
+<li> <p>cd into <code>gs-serving-web-content/initial</code></p> </li>
+<li> <p>Jump ahead to <a href="#initial">Create a web controller</a>.</p> </li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>When you’re finished</strong>, you can check your results against the code in <code>gs-serving-web-content/complete</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1 reveal-gradle">
+<h2 id="reveal-gradle">Build with Gradle</h2>
+<div class="sectionbody">
+</div>
+</div>
+<div class="sect1 use-gradle">
+<h2 id="scratch">Build with Gradle</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First you set up a basic build script. You can use any build system you like when building apps with Spring, but the code you need to work with <a href="http://gradle.org">Gradle</a> and <a href="https://maven.apache.org">Maven</a> is included here. If you’re not familiar with either, refer to <a href="/guides/gs/gradle">Building Java Projects with Gradle</a> or <a href="/guides/gs/maven">Building Java Projects with Maven</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_create_the_directory_structure">Create the directory structure</h3>
+<div class="paragraph">
+<p>In a project directory of your choosing, create the following subdirectory structure; for example, with <code>mkdir -p src/main/java/hello</code> on *nix systems:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>└── src
+    └── main
+        └── java
+            └── hello</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_create_a_gradle_build_file">Create a Gradle build file</h3>
+<div class="paragraph">
+<p>Below is the <a href="https://github.com/spring-guides/gs-serving-web-content/blob/master/initial/build.gradle">initial Gradle build file</a>.</p>
+</div>
+<div class="paragraph">
+<p><code>build.gradle</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="buildscript {
+    repositories {
+        maven { url &quot;http://repo.spring.io/libs-release&quot; }
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath(&quot;org.springframework.boot:spring-boot-gradle-plugin:1.1.5.RELEASE&quot;)
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+
+jar {
+    baseName = 'gs-serving-web-content'
+    version =  '0.1.0'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url &quot;http://repo.spring.io/libs-release&quot; }
+}
+
+dependencies {
+    compile(&quot;org.springframework.boot:spring-boot-starter-thymeleaf&quot;)
+    testCompile(&quot;junit:junit&quot;)
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.11'
+}"></button><pre class="prettyprint java language-java prettyprinted"><code><span class="pln">buildscript </span><span class="pun">{</span><span class="pln">
+    repositories </span><span class="pun">{</span><span class="pln">
+        maven </span><span class="pun">{</span><span class="pln"> url </span><span class="str">"http://repo.spring.io/libs-release"</span><span class="pln"> </span><span class="pun">}</span><span class="pln">
+        mavenLocal</span><span class="pun">()</span><span class="pln">
+        mavenCentral</span><span class="pun">()</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+    dependencies </span><span class="pun">{</span><span class="pln">
+        classpath</span><span class="pun">(</span><span class="str">"org.springframework.boot:spring-boot-gradle-plugin:1.1.5.RELEASE"</span><span class="pun">)</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">}</span><span class="pln">
+
+apply plugin</span><span class="pun">:</span><span class="pln"> </span><span class="str">'java'</span><span class="pln">
+apply plugin</span><span class="pun">:</span><span class="pln"> </span><span class="str">'eclipse'</span><span class="pln">
+apply plugin</span><span class="pun">:</span><span class="pln"> </span><span class="str">'idea'</span><span class="pln">
+apply plugin</span><span class="pun">:</span><span class="pln"> </span><span class="str">'spring-boot'</span><span class="pln">
+
+jar </span><span class="pun">{</span><span class="pln">
+    baseName </span><span class="pun">=</span><span class="pln"> </span><span class="str">'gs-serving-web-content'</span><span class="pln">
+    version </span><span class="pun">=</span><span class="pln">  </span><span class="str">'0.1.0'</span><span class="pln">
+</span><span class="pun">}</span><span class="pln">
+
+repositories </span><span class="pun">{</span><span class="pln">
+    mavenLocal</span><span class="pun">()</span><span class="pln">
+    mavenCentral</span><span class="pun">()</span><span class="pln">
+    maven </span><span class="pun">{</span><span class="pln"> url </span><span class="str">"http://repo.spring.io/libs-release"</span><span class="pln"> </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">}</span><span class="pln">
+
+dependencies </span><span class="pun">{</span><span class="pln">
+    compile</span><span class="pun">(</span><span class="str">"org.springframework.boot:spring-boot-starter-thymeleaf"</span><span class="pun">)</span><span class="pln">
+    testCompile</span><span class="pun">(</span><span class="str">"junit:junit"</span><span class="pun">)</span><span class="pln">
+</span><span class="pun">}</span><span class="pln">
+
+task wrapper</span><span class="pun">(</span><span class="pln">type</span><span class="pun">:</span><span class="pln"> </span><span class="typ">Wrapper</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    gradleVersion </span><span class="pun">=</span><span class="pln"> </span><span class="str">'1.11'</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <a href="https://github.com/spring-projects/spring-boot/tree/master/spring-boot-tools/spring-boot-gradle-plugin">Spring Boot gradle plugin</a> provides many convenient features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li> <p>It collects all the jars on the classpath and builds a single, runnable "über-jar", which makes it more convenient to execute and transport your service.</p> </li>
+<li> <p>It searches for the <code>public static void main()</code> method to flag as a runnable class.</p> </li>
+<li> <p>It provides a built-in dependency resolver that sets the version number to match <a href="https://github.com/spring-projects/spring-boot/blob/master/spring-boot-dependencies/pom.xml">Spring Boot dependencies</a>. You can override any version you wish, but it will default to Boot’s chosen set of versions.</p> </li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1 reveal-maven">
+<h2 id="reveal-maven">Build with Maven</h2>
+<div class="sectionbody">
+</div>
+</div>
+<div class="sect1 use-maven">
+<h2 id="use-maven">Build with Maven</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First you set up a basic build script. You can use any build system you like when building apps with Spring, but the code you need to work with <a href="https://maven.apache.org">Maven</a> is included here. If you’re not familiar with Maven, refer to <a href="/guides/gs/maven">Building Java Projects with Maven</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_create_the_directory_structure_2">Create the directory structure</h3>
+<div class="paragraph">
+<p>In a project directory of your choosing, create the following subdirectory structure; for example, with <code>mkdir -p src/main/java/hello</code> on *nix systems:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>└── src
+    └── main
+        └── java
+            └── hello</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>pom.xml</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="<?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>
+<project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+    xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.springframework</groupId>
+    <artifactId>gs-serving-web-content</artifactId>
+    <version>0.1.0</version>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.1.5.RELEASE</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <start-class>hello.Application</start-class>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>spring-milestone</id>
+            <url>http://repo.spring.io/libs-release</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-milestone</id>
+            <url>http://repo.spring.io/libs-release</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+</project>"></button><pre class="prettyprint xml language-xml prettyprinted"><code><span class="pun">&lt;?</span><span class="pln">xml version</span><span class="pun">=</span><span class="str">"1.0"</span><span class="pln"> encoding</span><span class="pun">=</span><span class="str">"UTF-8"</span><span class="pun">?&gt;</span><span class="pln">
+</span><span class="tag">&lt;project</span><span class="pln"> </span><span class="atn">xmlns</span><span class="pun">=</span><span class="atv">"http://maven.apache.org/POM/4.0.0"</span><span class="pln"> </span><span class="atn">xmlns:xsi</span><span class="pun">=</span><span class="atv">"http://www.w3.org/2001/XMLSchema-instance"</span><span class="pln">
+    </span><span class="atn">xsi:schemaLocation</span><span class="pun">=</span><span class="atv">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="tag">&gt;</span><span class="pln">
+    </span><span class="tag">&lt;modelVersion&gt;</span><span class="pln">4.0.0</span><span class="tag">&lt;/modelVersion&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;groupId&gt;</span><span class="pln">org.springframework</span><span class="tag">&lt;/groupId&gt;</span><span class="pln">
+    </span><span class="tag">&lt;artifactId&gt;</span><span class="pln">gs-serving-web-content</span><span class="tag">&lt;/artifactId&gt;</span><span class="pln">
+    </span><span class="tag">&lt;version&gt;</span><span class="pln">0.1.0</span><span class="tag">&lt;/version&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;parent&gt;</span><span class="pln">
+        </span><span class="tag">&lt;groupId&gt;</span><span class="pln">org.springframework.boot</span><span class="tag">&lt;/groupId&gt;</span><span class="pln">
+        </span><span class="tag">&lt;artifactId&gt;</span><span class="pln">spring-boot-starter-parent</span><span class="tag">&lt;/artifactId&gt;</span><span class="pln">
+        </span><span class="tag">&lt;version&gt;</span><span class="pln">1.1.5.RELEASE</span><span class="tag">&lt;/version&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/parent&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;dependencies&gt;</span><span class="pln">
+        </span><span class="tag">&lt;dependency&gt;</span><span class="pln">
+            </span><span class="tag">&lt;groupId&gt;</span><span class="pln">org.springframework.boot</span><span class="tag">&lt;/groupId&gt;</span><span class="pln">
+            </span><span class="tag">&lt;artifactId&gt;</span><span class="pln">spring-boot-starter-thymeleaf</span><span class="tag">&lt;/artifactId&gt;</span><span class="pln">
+        </span><span class="tag">&lt;/dependency&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/dependencies&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;properties&gt;</span><span class="pln">
+        </span><span class="tag">&lt;start-class&gt;</span><span class="pln">hello.Application</span><span class="tag">&lt;/start-class&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/properties&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;build&gt;</span><span class="pln">
+        </span><span class="tag">&lt;plugins&gt;</span><span class="pln">
+            </span><span class="tag">&lt;plugin&gt;</span><span class="pln">
+                </span><span class="tag">&lt;groupId&gt;</span><span class="pln">org.springframework.boot</span><span class="tag">&lt;/groupId&gt;</span><span class="pln">
+                </span><span class="tag">&lt;artifactId&gt;</span><span class="pln">spring-boot-maven-plugin</span><span class="tag">&lt;/artifactId&gt;</span><span class="pln">
+            </span><span class="tag">&lt;/plugin&gt;</span><span class="pln">
+        </span><span class="tag">&lt;/plugins&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/build&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;repositories&gt;</span><span class="pln">
+        </span><span class="tag">&lt;repository&gt;</span><span class="pln">
+            </span><span class="tag">&lt;id&gt;</span><span class="pln">spring-milestone</span><span class="tag">&lt;/id&gt;</span><span class="pln">
+            </span><span class="tag">&lt;url&gt;</span><span class="pln">http://repo.spring.io/libs-release</span><span class="tag">&lt;/url&gt;</span><span class="pln">
+        </span><span class="tag">&lt;/repository&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/repositories&gt;</span><span class="pln">
+
+    </span><span class="tag">&lt;pluginRepositories&gt;</span><span class="pln">
+        </span><span class="tag">&lt;pluginRepository&gt;</span><span class="pln">
+            </span><span class="tag">&lt;id&gt;</span><span class="pln">spring-milestone</span><span class="tag">&lt;/id&gt;</span><span class="pln">
+            </span><span class="tag">&lt;url&gt;</span><span class="pln">http://repo.spring.io/libs-release</span><span class="tag">&lt;/url&gt;</span><span class="pln">
+        </span><span class="tag">&lt;/pluginRepository&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/pluginRepositories&gt;</span><span class="pln">
+
+</span><span class="tag">&lt;/project&gt;</span></code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody>
+<tr>
+<td class="icon"> <i class="icon-note" title="Note"></i> </td>
+<td class="content"> You might notice a specific version of <strong>maven-compiler-plugin</strong>. This is <strong>NOT</strong> recommended in general. Instead, it’s meant to solve an issue with our CI system that defaulted to a very old (pre-Java5) version of this plugin. </td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph">
+<p>The <a href="https://github.com/spring-projects/spring-boot/tree/master/spring-boot-tools/spring-boot-maven-plugin">Spring Boot Maven plugin</a> provides many convenient features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li> <p>It collects all the jars on the classpath and builds a single, runnable "über-jar", which makes it more convenient to execute and transport your service.</p> </li>
+<li> <p>It searches for the <code>public static void main()</code> method to flag as a runnable class.</p> </li>
+<li> <p>It provides a built-in dependency resolver that sets the version number to match <a href="https://github.com/spring-projects/spring-boot/blob/master/spring-boot-dependencies/pom.xml">Spring Boot dependencies</a>. You can override any version you wish, but it will default to Boot’s chosen set of versions.</p> </li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1 reveal-sts">
+<h2 id="reveal-sts">Build with Spring Tool Suite</h2>
+<div class="sectionbody">
+</div>
+</div>
+<div class="sect1 use-sts">
+<h2 id="use-sts">Build with Spring Tool Suite</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have Spring Tool Suite, then you can simply <a href="/guides/gs/sts/">import this guide directly</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="initial">Create a web controller</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In Spring’s approach to building web sites, HTTP requests are handled by a controller. You can easily identify these requests by the <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/stereotype/Controller.html"><code>@Controller</code></a> annotation. In the following example, the GreetingController handles GET requests for /greeting by returning the name of a <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/servlet/View.html"><code>View</code></a>, in this case, "greeting". A <code>View</code> is responsible for rendering the HTML content:</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/hello/GreetingController.java</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="package hello;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+public class GreetingController {
+
+    @RequestMapping(&quot;/greeting&quot;)
+    public String greeting(@RequestParam(value=&quot;name&quot;, required=false, defaultValue=&quot;World&quot;) String name, Model model) {
+        model.addAttribute(&quot;name&quot;, name);
+        return &quot;greeting&quot;;
+    }
+
+}"></button><pre class="prettyprint java language-java prettyprinted"><code><span class="kwd">package</span><span class="pln"> hello</span><span class="pun">;</span><span class="pln">
+
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">stereotype</span><span class="pun">.</span><span class="typ">Controller</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">ui</span><span class="pun">.</span><span class="typ">Model</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">web</span><span class="pun">.</span><span class="pln">bind</span><span class="pun">.</span><span class="pln">annotation</span><span class="pun">.</span><span class="typ">RequestMapping</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">web</span><span class="pun">.</span><span class="pln">bind</span><span class="pun">.</span><span class="pln">annotation</span><span class="pun">.</span><span class="typ">RequestParam</span><span class="pun">;</span><span class="pln">
+
+</span><span class="lit">@Controller</span><span class="pln">
+</span><span class="kwd">public</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> </span><span class="typ">GreetingController</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+
+    </span><span class="lit">@RequestMapping</span><span class="pun">(</span><span class="str">"/greeting"</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">public</span><span class="pln"> </span><span class="typ">String</span><span class="pln"> greeting</span><span class="pun">(</span><span class="lit">@RequestParam</span><span class="pun">(</span><span class="pln">value</span><span class="pun">=</span><span class="str">"name"</span><span class="pun">,</span><span class="pln"> required</span><span class="pun">=</span><span class="kwd">false</span><span class="pun">,</span><span class="pln"> defaultValue</span><span class="pun">=</span><span class="str">"World"</span><span class="pun">)</span><span class="pln"> </span><span class="typ">String</span><span class="pln"> name</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Model</span><span class="pln"> model</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+        model</span><span class="pun">.</span><span class="pln">addAttribute</span><span class="pun">(</span><span class="str">"name"</span><span class="pun">,</span><span class="pln"> name</span><span class="pun">);</span><span class="pln">
+        </span><span class="kwd">return</span><span class="pln"> </span><span class="str">"greeting"</span><span class="pun">;</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+
+</span><span class="pun">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This controller is concise and simple, but there’s plenty going on. Let’s break it down step by step.</p>
+</div>
+<div class="paragraph">
+<p>The <code>@RequestMapping</code> annotation ensures that HTTP requests to <code>/greeting</code> are mapped to the <code>greeting()</code> method.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody>
+<tr>
+<td class="icon"> <i class="icon-note" title="Note"></i> </td>
+<td class="content"> The above example does not specify <code>GET</code> vs. <code>PUT</code>, <code>POST</code>, and so forth, because <code>@RequestMapping</code> maps all HTTP operations by default. Use <code>@RequestMapping(method=GET)</code> to narrow this mapping. </td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph">
+<p><a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestParam.html"><code>@RequestParam</code></a> binds the value of the query String parameter <code>name</code> into the <code>name</code> parameter of the <code>greeting()</code> method. This query String parameter is not <code>required</code>; if it is absent in the request, the <code>defaultValue</code> of "World" is used. The value of the <code>name</code> parameter is added to a <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/ui/Model.html"><code>Model</code></a> object, ultimately making it accessible to the view template.</p>
+</div>
+<div class="paragraph">
+<p>The implementation of the method body relies on a <a href="/understanding/view-templates">view technology</a>, in this case <a href="http://www.thymeleaf.org/doc/html/Thymeleaf-Spring3.html">Thymeleaf</a>, to perform server-side rendering of the HTML. Thymeleaf parses the <code>greeting.html</code> template below and evaluates the <code>th:text</code> expression to render the value of the <code>${name}</code> parameter that was set in the controller.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/resources/templates/greeting.html</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="<!DOCTYPE HTML>
+<html xmlns:th=&quot;http://www.thymeleaf.org&quot;>
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot; />
+</head>
+<body>
+    <p th:text=&quot;'Hello, ' + ${name} + '!'&quot; />
+</body>
+</html>"></button><pre class="prettyprint html language-html prettyprinted"><code><span class="dec">&lt;!DOCTYPE HTML&gt;</span><span class="pln">
+</span><span class="tag">&lt;html</span><span class="pln"> </span><span class="atn">xmlns:th</span><span class="pun">=</span><span class="atv">"http://www.thymeleaf.org"</span><span class="tag">&gt;</span><span class="pln">
+</span><span class="tag">&lt;head&gt;</span><span class="pln">
+    </span><span class="tag">&lt;title&gt;</span><span class="pln">Getting Started: Serving Web Content</span><span class="tag">&lt;/title&gt;</span><span class="pln">
+    </span><span class="tag">&lt;meta</span><span class="pln"> </span><span class="atn">http-equiv</span><span class="pun">=</span><span class="atv">"Content-Type"</span><span class="pln"> </span><span class="atn">content</span><span class="pun">=</span><span class="atv">"text/html; charset=UTF-8"</span><span class="pln"> </span><span class="tag">/&gt;</span><span class="pln">
+</span><span class="tag">&lt;/head&gt;</span><span class="pln">
+</span><span class="tag">&lt;body&gt;</span><span class="pln">
+    </span><span class="tag">&lt;p</span><span class="pln"> </span><span class="atn">th:text</span><span class="pun">=</span><span class="atv">"'Hello, ' + ${name} + '!'"</span><span class="pln"> </span><span class="tag">/&gt;</span><span class="pln">
+</span><span class="tag">&lt;/body&gt;</span><span class="pln">
+</span><span class="tag">&lt;/html&gt;</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_make_the_application_executable">Make the application executable</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Although it is possible to package this service as a traditional <a href="/understanding/WAR">WAR</a> file for deployment to an external application server, the simpler approach demonstrated below creates a standalone application. You package everything in a single, executable JAR file, driven by a good old Java <code>main()</code> method. Along the way, you use Spring’s support for embedding the <a href="/understanding/Tomcat">Tomcat</a> servlet container as the HTTP runtime, instead of deploying to an external instance.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/hello/Application.java</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="package hello;
+
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.annotation.ComponentScan;
+
+@ComponentScan
+@EnableAutoConfiguration
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+}"></button><pre class="prettyprint java language-java prettyprinted"><code><span class="kwd">package</span><span class="pln"> hello</span><span class="pun">;</span><span class="pln">
+
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">boot</span><span class="pun">.</span><span class="pln">autoconfigure</span><span class="pun">.</span><span class="typ">EnableAutoConfiguration</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">boot</span><span class="pun">.</span><span class="typ">SpringApplication</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">import</span><span class="pln"> org</span><span class="pun">.</span><span class="pln">springframework</span><span class="pun">.</span><span class="pln">context</span><span class="pun">.</span><span class="pln">annotation</span><span class="pun">.</span><span class="typ">ComponentScan</span><span class="pun">;</span><span class="pln">
+
+</span><span class="lit">@ComponentScan</span><span class="pln">
+</span><span class="lit">@EnableAutoConfiguration</span><span class="pln">
+</span><span class="kwd">public</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> </span><span class="typ">Application</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+
+    </span><span class="kwd">public</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">void</span><span class="pln"> main</span><span class="pun">(</span><span class="typ">String</span><span class="pun">[]</span><span class="pln"> args</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+        </span><span class="typ">SpringApplication</span><span class="pun">.</span><span class="pln">run</span><span class="pun">(</span><span class="typ">Application</span><span class="pun">.</span><span class="kwd">class</span><span class="pun">,</span><span class="pln"> args</span><span class="pun">);</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+
+</span><span class="pun">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>main()</code> method defers to the <a href="http://docs.spring.io/spring-boot/docs/1.1.5.RELEASE/api/org/springframework/boot/SpringApplication.html"><code>SpringApplication</code></a> helper class, providing <code>Application.class</code> as an argument to its <code>run()</code> method. This tells Spring to read the annotation metadata from <code>Application</code> and to manage it as a component in the <a href="/understanding/application-context">Spring application context</a>.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/ComponentScan.html"><code>@ComponentScan</code></a> annotation tells Spring to search recursively through the <code>hello</code> package and its children for classes marked directly or indirectly with Spring’s <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/stereotype/Component.html"><code>@Component</code></a> annotation. This directive ensures that Spring finds and registers the <code>GreetingController</code>, because it is marked with <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/stereotype/Controller.html"><code>@Controller</code></a>, which in turn is a kind of <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/stereotype/Component.html"><code>@Component</code></a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="http://docs.spring.io/spring-boot/docs/1.1.5.RELEASE/api/org/springframework/boot/autoconfigure/EnableAutoConfiguration.html"><code>@EnableAutoConfiguration</code></a> annotation switches on reasonable default behaviors based on the content of your classpath. For example, because the application depends on the embeddable version of Tomcat (tomcat-embed-core.jar), a Tomcat server is set up and configured with reasonable defaults on your behalf. And because the application also depends on Spring MVC (spring-webmvc.jar), a Spring MVC <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/servlet/DispatcherServlet.html"><code>DispatcherServlet</code></a> is configured and registered for you — no <code>web.xml</code> necessary! Auto-configuration is a powerful, flexible mechanism. See the <a href="http://docs.spring.io/spring-boot/docs/1.1.5.RELEASE/api/org/springframework/boot/autoconfigure/EnableAutoConfiguration.html">API documentation</a> for further details.</p>
+</div>
+<div class="sect2">
+<h3 id="_build_an_executable_jar">Build an executable JAR</h3>
+<div class="paragraph">
+<p>You can build a single executable JAR file that contains all the necessary dependencies, classes, and resources. This makes it easy to ship, version, and deploy the service as an application throughout the development lifecycle, across different environments, and so forth.</p>
+</div>
+<div class="literalblock has-copy-button">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="./gradlew build"></button><pre>./gradlew build</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can run the JAR file:</p>
+</div>
+<div class="literalblock has-copy-button">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="java -jar build/libs/gs-serving-web-content-0.1.0.jar"></button><pre>java -jar build/libs/gs-serving-web-content-0.1.0.jar</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you are using Maven, you can run the application using <code>mvn spring-boot:run</code>. Or you can build the JAR file with <code>mvn clean package</code> and run the JAR by typing:</p>
+</div>
+<div class="literalblock has-copy-button">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="java -jar target/gs-serving-web-content-0.1.0.jar"></button><pre>java -jar target/gs-serving-web-content-0.1.0.jar</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody>
+<tr>
+<td class="icon"> <i class="icon-note" title="Note"></i> </td>
+<td class="content"> The procedure above will create a runnable JAR. You can also opt to <a href="/guides/gs/convert-jar-to-war/">build a classic WAR file</a> instead. </td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_run_the_service">Run the service</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you are using Gradle, you can run your service at the command line this way:</p>
+</div>
+<div class="literalblock has-copy-button">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="./gradlew clean build &amp;&amp; java -jar build/libs/gs-serving-web-content-0.1.0.jar"></button><pre>./gradlew clean build &amp;&amp; java -jar build/libs/gs-serving-web-content-0.1.0.jar</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody>
+<tr>
+<td class="icon"> <i class="icon-note" title="Note"></i> </td>
+<td class="content"> If you are using Maven, you can run your service by typing <code>mvn clean package &amp;&amp; java -jar target/gs-serving-web-content-0.1.0.jar</code>. </td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph">
+<p>You can alternatively run the app directly from Gradle like this:</p>
+</div>
+<div class="literalblock has-copy-button">
+<div class="content">
+<button class="copy-button snippet" data-clipboard-text="./gradlew bootRun"></button><pre>./gradlew bootRun</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tbody>
+<tr>
+<td class="icon"> <i class="icon-note" title="Note"></i> </td>
+<td class="content"> With mvn, you can run <code>mvn spring-boot:run</code>. </td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph">
+<p>Logging output is displayed. The service should be up and running within a few seconds.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_test_the_service">Test the service</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that the web site is running, visit <a href="http://localhost:8080/greeting">http://localhost:8080/greeting</a>, where you see:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>"Hello, World!"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Provide a <code>name</code> query string parameter with <a href="http://localhost:8080/greeting?name=User">http://localhost:8080/greeting?name=User</a>. Notice how the message changes from "Hello, World!" to "Hello, User!":</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>"Hello, User!"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This change demonstrates that the <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestParam.html"><code>@RequestParam</code></a> arrangement in <code>GreetingController</code> is working as expected. The <code>name</code> parameter has been given a default value of "World", but can always be explicitly overridden through the query string.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary">Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Congratulations! You have just developed a web page using Spring.</p>
+</div>
+</div>
+</div></div>
+</article>
